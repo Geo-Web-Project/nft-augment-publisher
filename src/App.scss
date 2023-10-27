@@ -1,0 +1,39 @@
+@import "bootstrap/scss/bootstrap";
+@import "bootstrap/scss/utilities";
+
+$utilities: map-merge(
+    $utilities,
+    (
+        "width": (
+            property: width,
+            class: w,
+            responsive: true,
+            values: (
+                25: 25%,
+                33: 33%,
+                50: 50%,
+                66: 66%,
+                75: 75%,
+                100: 100%,
+                auto: auto,
+            ),
+        ),
+    )
+);
+
+@import "bootstrap/scss/utilities/api";
+
+@font-face {
+    font-family: "SF Pro";
+    src: url(./assets/fonts/SF-Pro-Rounded-Regular.otf);
+}
+
+body {
+    font-family: "Sf Pro";
+}
+
+main {
+    max-width: 600px;
+    margin: auto;
+    padding: 2rem;
+}
