@@ -13,7 +13,11 @@ export default function Header() {
             <h1>NFT Augment Publisher</h1>
           </Col>
           <Col xs="2" className="d-flex justify-content-end align-items-center">
-            <ConnectButton label="Connect" />
+            <ConnectButton
+              label="Connect"
+              chainStatus="icon"
+              showBalance={false}
+            />
           </Col>
         </Row>
       </Container>
