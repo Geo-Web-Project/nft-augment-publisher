@@ -5,18 +5,26 @@ import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import ERC721ABI from "../abi/ERC721.json";
 
+enum Chain {
+  MAINNET = 1,
+  OPTIMISM = 10,
+  POLYGON = 137,
+}
+
 interface Nft {
-  chainId: string;
+  chainId: Chain;
   collectionAddress: string;
   tokenId: string;
+  memeText: string;
 }
 
 export default function Publisher() {
   const [error, setError] = useState<string>("");
   const [nft, setNft] = useState<Nft>({
-    chainId: "",
+    chainId: Chain.MAINNET,
     collectionAddress: "",
     tokenId: "",
+    memeText: "",
   });
 
   const handleSubmit = async (e: React.FormEvent<EventTarget>) => {
@@ -24,7 +32,7 @@ export default function Publisher() {
 
     try {
       const tokenURI = (await readContract({
-        chainId: Number(nft.chainId),
+        chainId: nft.chainId,
         abi: ERC721ABI,
         address: nft.collectionAddress as Address,
         functionName: "tokenURI",
@@ -51,7 +59,12 @@ export default function Publisher() {
 
   const handleClear = () => {
     setError("");
-    setNft({ chainId: "", collectionAddress: "", tokenId: "" });
+    setNft({
+      chainId: Chain.MAINNET,
+      collectionAddress: "",
+      tokenId: "",
+      memeText: "",
+    });
   };
 
   return (
@@ -62,13 +75,30 @@ export default function Publisher() {
       </h2>
       <Form onSubmit={handleSubmit}>
         <Form.Group className="mb-3">
-          <Form.Label>Chain ID</Form.Label>
-          <Form.Control
-            type="text"
-            placeholder="1"
-            value={nft.chainId}
-            onChange={(e) => setNft({ ...nft, chainId: e.target.value })}
-          />
+          <Form.Label>Chain</Form.Label>
+          <div>
+            <Form.Check
+              type="radio"
+              inline
+              label="ETH"
+              checked={nft.chainId === Chain.MAINNET}
+              onChange={() => setNft({ ...nft, chainId: Chain.MAINNET })}
+            />
+            <Form.Check
+              type="radio"
+              inline
+              label="Polygon"
+              checked={nft.chainId === Chain.POLYGON}
+              onChange={() => setNft({ ...nft, chainId: Chain.POLYGON })}
+            />
+            <Form.Check
+              type="radio"
+              inline
+              label="Optimism"
+              checked={nft.chainId === Chain.OPTIMISM}
+              onChange={() => setNft({ ...nft, chainId: Chain.OPTIMISM })}
+            />
+          </div>
         </Form.Group>
         <Form.Group className="mb-3">
           <Form.Label>NFT Collection Address</Form.Label>
@@ -90,19 +120,28 @@ export default function Publisher() {
             onChange={(e) => setNft({ ...nft, tokenId: e.target.value })}
           />
         </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label>Meme Text</Form.Label>
+          <Form.Control
+            type="text"
+            placeholder="Enter text..."
+            value={nft.memeText}
+            onChange={(e) => setNft({ ...nft, memeText: e.target.value })}
+          />
+        </Form.Group>
         <div className="d-flex justify-content-center justify-content-lg-end gap-3">
           <Button
             variant="danger"
             className="w-50 w-lg-33 rounded-3"
             onClick={handleClear}
-            disabled={!nft.chainId && !nft.collectionAddress && !nft.tokenId}
+            disabled={!nft.collectionAddress && !nft.tokenId && !nft.memeText}
           >
             Clear
           </Button>
           <Button
             variant="primary"
             type="submit"
-            disabled={!nft.chainId || !nft.collectionAddress || !nft.tokenId}
+            disabled={!nft.collectionAddress || !nft.tokenId}
             className="w-50 w-lg-33 px-3 rounded-3"
           >
             Publish Augment
