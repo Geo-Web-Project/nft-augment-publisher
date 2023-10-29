@@ -11,21 +11,33 @@ enum Chain {
   POLYGON = 137,
 }
 
+enum MediaType {
+  IMAGE,
+  MODEL,
+  AUDIO,
+}
+
 interface Nft {
   chainId: Chain;
   collectionAddress: string;
   tokenId: string;
   memeText: string;
+  mediaType: MediaType;
+  displayHeight: string;
 }
+
+const defaultFormValues: Nft = {
+  chainId: Chain.MAINNET,
+  collectionAddress: "",
+  tokenId: "",
+  memeText: "",
+  mediaType: MediaType.IMAGE,
+  displayHeight: "",
+};
 
 export default function Publisher() {
   const [error, setError] = useState<string>("");
-  const [nft, setNft] = useState<Nft>({
-    chainId: Chain.MAINNET,
-    collectionAddress: "",
-    tokenId: "",
-    memeText: "",
-  });
+  const [nft, setNft] = useState<Nft>(defaultFormValues);
 
   const handleSubmit = async (e: React.FormEvent<EventTarget>) => {
     e.preventDefault();
@@ -47,7 +59,12 @@ export default function Publisher() {
 
       handleClear();
       setError("");
-      console.log(nft, metadata?.image);
+      console.log(
+        nft,
+        nft.mediaType === MediaType.IMAGE
+          ? metadata?.image
+          : metadata?.animation_url
+      );
     } catch (err: any) {
       setError(
         `There was an error while trying to publish the NFT augment,
@@ -59,12 +76,7 @@ export default function Publisher() {
 
   const handleClear = () => {
     setError("");
-    setNft({
-      chainId: Chain.MAINNET,
-      collectionAddress: "",
-      tokenId: "",
-      memeText: "",
-    });
+    setNft(defaultFormValues);
   };
 
   return (
@@ -121,6 +133,50 @@ export default function Publisher() {
           />
         </Form.Group>
         <Form.Group className="mb-3">
+          <Form.Label>Media Type</Form.Label>
+          <div>
+            <Form.Check
+              type="radio"
+              inline
+              label="Image"
+              checked={nft.mediaType === MediaType.IMAGE}
+              onChange={() => setNft({ ...nft, mediaType: MediaType.IMAGE })}
+            />
+            <Form.Check
+              type="radio"
+              inline
+              label="3D Model"
+              checked={nft.mediaType === MediaType.MODEL}
+              onChange={() => setNft({ ...nft, mediaType: MediaType.MODEL })}
+            />
+            <Form.Check
+              type="radio"
+              inline
+              label="Audio"
+              checked={nft.mediaType === MediaType.AUDIO}
+              onChange={() => setNft({ ...nft, mediaType: MediaType.AUDIO })}
+            />
+          </div>
+        </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label>
+            AR Display Height (Existing image/model dimensions will be
+            maintained)
+          </Form.Label>
+          <div className="d-flex gap-2 align-items-center">
+            <Form.Control
+              type="text"
+              placeholder="10"
+              value={nft.displayHeight}
+              className="w-20"
+              onChange={(e) =>
+                setNft({ ...nft, displayHeight: e.target.value })
+              }
+            />
+            <span>meters</span>
+          </div>
+        </Form.Group>
+        <Form.Group className="mb-3">
           <Form.Label>Meme Text</Form.Label>
           <Form.Control
             type="text"
@@ -134,14 +190,21 @@ export default function Publisher() {
             variant="danger"
             className="w-50 w-lg-33 rounded-3"
             onClick={handleClear}
-            disabled={!nft.collectionAddress && !nft.tokenId && !nft.memeText}
+            disabled={
+              !nft.collectionAddress &&
+              !nft.tokenId &&
+              !nft.memeText &&
+              !nft.displayHeight
+            }
           >
             Clear
           </Button>
           <Button
             variant="primary"
             type="submit"
-            disabled={!nft.collectionAddress || !nft.tokenId}
+            disabled={
+              !nft.collectionAddress || !nft.tokenId || !nft.displayHeight
+            }
             className="w-50 w-lg-33 px-3 rounded-3"
           >
             Publish Augment
