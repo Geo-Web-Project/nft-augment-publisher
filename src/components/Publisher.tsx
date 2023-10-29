@@ -51,9 +51,9 @@ export default function Publisher() {
         args: [BigInt(nft.tokenId)],
       })) as string;
       const metadataRes = await fetch(
-        `https://ipfs.io/ipfs/${
-          tokenURI.startsWith("ipfs://") ? tokenURI.slice(7) : tokenURI
-        }`
+        tokenURI.startsWith("ipfs://")
+          ? `https://ipfs.io/ipfs/${tokenURI.slice(7)}`
+          : tokenURI
       );
       const metadata = await metadataRes.json();
 
