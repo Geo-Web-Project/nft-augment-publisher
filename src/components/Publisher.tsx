@@ -1,9 +1,16 @@
 import { useState } from "react";
-import { Address } from "wagmi";
-import { readContract } from "@wagmi/core";
+import { Address, useAccount } from "wagmi";
+import { optimismGoerli } from "wagmi/chains";
+import { readContract, getWalletClient, waitForTransaction } from "@wagmi/core";
 import Button from "react-bootstrap/Button";
+import Image from "react-bootstrap/Image";
 import Form from "react-bootstrap/Form";
+import Spinner from "react-bootstrap/Spinner";
+import CopyTooltip from "./CopyTooltip";
+import CopyIcon from "../assets/copy.svg";
 import ERC721ABI from "../abi/ERC721.json";
+import NFTAugmentTemplateABI from "../abi/NFTAugmentTemplate.json";
+import { augmentTemplateBytecode } from "../lib/constants";
 
 enum Chain {
   MAINNET = 1,
@@ -13,8 +20,8 @@ enum Chain {
 
 enum MediaType {
   IMAGE,
-  MODEL,
   AUDIO,
+  MODEL,
 }
 
 interface Nft {
@@ -38,11 +45,17 @@ const defaultFormValues: Nft = {
 export default function Publisher() {
   const [error, setError] = useState<string>("");
   const [nft, setNft] = useState<Nft>(defaultFormValues);
+  const [augmentAddress, setAugmentAddress] = useState<Address | null>(null);
+  const [isDeploying, setIsDeploying] = useState<boolean>(false);
+
+  const { address: accountAddress } = useAccount();
 
   const handleSubmit = async (e: React.FormEvent<EventTarget>) => {
     e.preventDefault();
 
     try {
+      setIsDeploying(true);
+
       const tokenURI = (await readContract({
         chainId: nft.chainId,
         abi: ERC721ABI,
@@ -56,22 +69,44 @@ export default function Publisher() {
           : tokenURI
       );
       const metadata = await metadataRes.json();
+      console.log(metadata);
 
-      handleClear();
-      setError("");
-      console.log(
-        nft,
-        nft.mediaType === MediaType.IMAGE
-          ? metadata?.image
-          : metadata?.animation_url
-      );
+      if (accountAddress) {
+        const walletClient = await getWalletClient({
+          chainId: optimismGoerli.id,
+        });
+
+        if (walletClient) {
+          const deploymentTxHash = await walletClient.deployContract({
+            abi: NFTAugmentTemplateABI,
+            account: accountAddress,
+            args: [
+              BigInt(nft.mediaType),
+              BigInt(nft.chainId),
+              nft.collectionAddress,
+              BigInt(nft.tokenId),
+            ],
+            bytecode: augmentTemplateBytecode,
+          });
+          const deploymentTx = await waitForTransaction({
+            hash: deploymentTxHash,
+            chainId: optimismGoerli.id,
+          });
+          setAugmentAddress(deploymentTx.contractAddress);
+          handleClear();
+          setError("");
+        }
+      }
     } catch (err: any) {
+      setAugmentAddress(null);
       setError(
         `There was an error while trying to publish the NFT augment,
           please make sure the information provided is right`
       );
       console.error(err);
     }
+
+    setIsDeploying(false);
   };
 
   const handleClear = () => {
@@ -203,15 +238,51 @@ export default function Publisher() {
             variant="primary"
             type="submit"
             disabled={
-              !nft.collectionAddress || !nft.tokenId || !nft.displayHeight
+              !accountAddress ||
+              !nft.collectionAddress ||
+              !nft.tokenId ||
+              !nft.displayHeight
             }
             className="w-50 w-lg-33 px-3 rounded-3"
           >
-            Publish Augment
+            {isDeploying ? (
+              <Spinner as="span" size="sm" animation="border">
+                <span className="visually-hidden">Loading...</span>
+              </Spinner>
+            ) : (
+              <span>Publish Augment</span>
+            )}
           </Button>
         </div>
       </Form>
-      {error && <p className="mt-2 text-center text-warning">{error}</p>}
+      {error && <p className="mt-3 text-center text-warning">{error}</p>}
+      {augmentAddress && (
+        <div className="d-flex flex-column align-items-center mt-3 text-success">
+          <span className="text-center mt-2">
+            Success! Your NFT Augment is deployed to OP Goerli at
+          </span>
+          <CopyTooltip
+            contentClick="Copied"
+            contentHover="Copy Address"
+            target={
+              <>
+                <span className="d-lg-none d-flex align-items-center mt-2 text-success">
+                  {`${augmentAddress.slice(0, 8)}...${augmentAddress.slice(
+                    38,
+                    42
+                  )}`}{" "}
+                  <Image src={CopyIcon} width={18} />
+                </span>
+                <span className="d-none d-lg-flex align-items-center mt-2 text-success">
+                  {augmentAddress}
+                  <Image src={CopyIcon} width={18} />
+                </span>
+              </>
+            }
+            handleCopy={() => navigator.clipboard.writeText(augmentAddress)}
+          />
+        </div>
+      )}
     </>
   );
 }
