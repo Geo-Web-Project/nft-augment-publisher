@@ -66,7 +66,7 @@ export default function Publisher() {
       const metadataRes = await fetch(
         tokenURI.startsWith("ipfs://")
           ? `https://ipfs.io/ipfs/${tokenURI.slice(7)}`
-          : tokenURI
+          : tokenURI,
       );
       const metadata = await metadataRes.json();
       console.log(metadata);
@@ -85,6 +85,7 @@ export default function Publisher() {
               BigInt(nft.chainId),
               nft.collectionAddress,
               BigInt(nft.tokenId),
+              BigInt(nft.displayHeight) * BigInt(1000),
             ],
             bytecode: augmentTemplateBytecode,
           });
@@ -101,7 +102,7 @@ export default function Publisher() {
       setAugmentAddress(null);
       setError(
         `There was an error while trying to publish the NFT augment,
-          please make sure the information provided is right`
+          please make sure the information provided is right`,
       );
       console.error(err);
     }
@@ -269,7 +270,7 @@ export default function Publisher() {
                 <span className="d-lg-none d-flex align-items-center mt-2 text-success">
                   {`${augmentAddress.slice(0, 8)}...${augmentAddress.slice(
                     38,
-                    42
+                    42,
                   )}`}{" "}
                   <Image src={CopyIcon} width={18} />
                 </span>

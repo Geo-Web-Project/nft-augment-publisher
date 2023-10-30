@@ -20,6 +20,11 @@
         "internalType": "uint256",
         "name": "tokenId_",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint16",
+        "name": "physicalWidthInMillimeters_",
+        "type": "uint16"
       }
     ],
     "stateMutability": "nonpayable",
